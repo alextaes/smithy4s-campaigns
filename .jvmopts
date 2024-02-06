@@ -1,0 +1,12 @@
+-XX:MaxMetaspaceSize=2g
+-XX:ReservedCodeCacheSize=1g
+-Xms1g
+-Xmx12g
+-XshowSettings:vm
+-Xss4m
+-Dcats.effect.tracing.mode=full
+-Dcats.effect.tracing.buffer.size=64
+#-Dcats.effect.tracing.exceptions.enhanced=true
+#-Dactive-app=crud
+#-Dactive-app=basic
+#-Dactive-app=event-sourced-grpc
