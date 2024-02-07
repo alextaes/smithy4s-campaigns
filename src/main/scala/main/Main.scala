@@ -2,8 +2,6 @@ package main
 
 import Configs.*
 
-import doobie.util.ExecutionContexts
-
 import distage.Injector
 import distage.ModuleDef
 import distage.config.{ AppConfig, ConfigModuleDef }

@@ -53,9 +53,6 @@ class Middleware[F[_] : Sync : Async : Concurrent : Tracer](
 }
 
 
-object Middleware
-
-
 class ServerRoutes[F[_] : Sync : Async : Concurrent : Tracer](
                logger: Option[IzLogger]
                ):
@@ -69,7 +66,7 @@ class ServerRoutes[F[_] : Sync : Async : Concurrent : Tracer](
     }
     
       SimpleRestJsonBuilder.routes(
-      HttpServerImpl2(logger, getRequestInfo).transform(Converter.toIO)
+      HttpServerImpl(logger, getRequestInfo).transform(Converter.toIO)
 
     )
       .mapErrors(
@@ -80,4 +77,3 @@ class ServerRoutes[F[_] : Sync : Async : Concurrent : Tracer](
         Middleware[IO](routes, local).withRequestInfo
       }
     } 
-
