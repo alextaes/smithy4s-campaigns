@@ -13,7 +13,6 @@ import org.typelevel.ci.CIString
 import org.typelevel.otel4s.Otel4s
 import org.typelevel.otel4s.java.OtelJava
 import org.typelevel.otel4s.trace.Tracer
-import telemetry._
 
 class Middleware[F[_] : Sync : Async : Concurrent : Tracer](
                                                              routes: HttpRoutes[IO],
@@ -29,8 +28,8 @@ class Middleware[F[_] : Sync : Async : Concurrent : Tracer](
   private def buildInternal[F[_] : Sync : Async : Concurrent : LiftIO](otel: Otel4s[F]) = {
     for {
 
-      traceProvider <- otel.tracerProvider.get("http4s-service")
-      metricsProvider <- otel.meterProvider.get("http4s-service")
+      traceProvider <- otel.tracerProvider.get("smithy4s-campaigns")
+      // metricsProvider <- otel.meterProvider.get("smithy4s-campaigns")
 
     } yield {
       implicit val tracer: Tracer[F] = traceProvider

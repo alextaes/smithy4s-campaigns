@@ -3,8 +3,6 @@ import Dependencies.{Basic, SmithyLibs}
 import scala.collection.Seq
 
 ThisBuild / version := "0.1.0-SNAPSHOT"
-ThisBuild / organization := "com.example"
-ThisBuild / organizationName := "example"
 
 val opentelemetryVersion = "1.24.0"
 val opentelemetryAlphaVersion = s"$opentelemetryVersion-alpha"
