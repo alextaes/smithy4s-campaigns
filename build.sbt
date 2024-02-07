@@ -70,10 +70,11 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       "org.typelevel" %% "otel4s-java" % "0.4.0",
       "io.opentelemetry" % "opentelemetry-exporter-otlp" % "1.34.1" % Runtime,
+      "io.opentelemetry" % "opentelemetry-exporter-logging-otlp" % "1.34.1",
       "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.34.1" % Runtime,
      // "io.opentelemetry" % "opentelemetry-exporter-prometheus" % opentelemetryAlphaVersion,
 
-      "io.opentelemetry.javaagent" % "opentelemetry-javaagent" % "1.26.0" % Runtime
+     // "io.opentelemetry.javaagent" % "opentelemetry-javaagent" % "2.0.0" % Runtime
     ),
     //javaAgents += "io.opentelemetry.javaagent" % "opentelemetry-javaagent" % "1.24.0",
     javaOptions += "-Dotel.java.global-autoconfigure.enabled=true",
