@@ -23,6 +23,8 @@ import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits.*
 import org.typelevel.log4cats.LoggerFactory
 import org.typelevel.log4cats.slf4j.Slf4jFactory
+import org.typelevel.otel4s.Otel4s
+import org.typelevel.otel4s.trace.Tracer
 
 def loadContextFromClasspath[F[_]](keystorePassword: String, keyManagerPass: String)(implicit
     F: Sync[F]
