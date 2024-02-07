@@ -2,45 +2,72 @@ package infrastructure.http
 
 import smithy4s.http4s.SimpleRestJsonBuilder
 import org.http4s.dsl.io.*
-
 import logstage.IzLogger
-
 import smithy4s.hello.*
-
 import Converter.*
-
-
-import cats.data._
+import cats.data.*
 import org.http4s.HttpRoutes
-import cats.syntax.all._
+import cats.syntax.all.*
+import io.opentelemetry.api.GlobalOpenTelemetry
 import org.typelevel.ci.CIString
+import org.typelevel.otel4s.Otel4s
+import org.typelevel.otel4s.java.OtelJava
+import org.typelevel.otel4s.trace.Tracer
+import telemetry._
 
-object Middleware {
+class Middleware[F[_] : Sync : Async : Concurrent : Tracer](
+                                                             routes: HttpRoutes[IO],
+                                                             local: IOLocal[Option[RequestInfo]]
+                                                           ) {
 
-  def withRequestInfo(
-      routes: HttpRoutes[IO],
-      local: IOLocal[Option[RequestInfo]]
-  ): HttpRoutes[IO] =
+  private def otelResource[F[_] : Sync : Async : LiftIO]: Resource[F, Otel4s[F]] = {
+    Resource
+      .eval(Sync[F].delay(GlobalOpenTelemetry.get))
+      .evalMap(OtelJava.forAsync[F])
+  }
+
+  private def buildInternal[F[_] : Sync : Async : Concurrent : LiftIO](otel: Otel4s[F]) = {
+    for {
+
+      traceProvider <- otel.tracerProvider.get("http4s-service")
+      metricsProvider <- otel.meterProvider.get("http4s-service")
+
+    } yield {
+      implicit val tracer: Tracer[F] = traceProvider
+      new Middleware[F](routes, local)
+    }
+  }
+
+  def build[F[_] : Sync : Async : Concurrent : LiftIO] = {
+    otelResource.use(buildInternal[F])
+  }
+  
+  def withRequestInfo: HttpRoutes[IO] =
     HttpRoutes[IO] { request =>
       val requestInfo = Some(RequestInfo(
-         request.headers.headers.find( key => key.name == CIString("userId")).map( el => el.value )
+        request.headers.headers.find(key => key.name == CIString("userId")).map(el => el.value)
       ))
-        
+
       OptionT.liftF(local.set(requestInfo)) *> routes(request)
     }
-
 }
 
 
-class ServerRoutes(
+object Middleware
+
+
+class ServerRoutes[F[_] : Sync : Async : Concurrent : Tracer](
                logger: Option[IzLogger]
                ):
-      
+
+  import org.typelevel.otel4s.trace.Tracer.Implicits._
+  
   def getAll(local: IOLocal[Option[RequestInfo]]): Resource[IO, HttpRoutes[IO]] = {
     val getRequestInfo: IO[RequestInfo] = local.get.flatMap {
       case Some(value) => IO.pure(value)
       case None => IO.raiseError(new IllegalAccessException("Tried to access the value outside of the lifecycle of an http request"))
     }
+    
       SimpleRestJsonBuilder.routes(
       HttpServerImpl2(logger, getRequestInfo).transform(Converter.toIO)
 
@@ -50,12 +77,7 @@ class ServerRoutes(
       )
     .resource
       .map { routes =>
-        Middleware.withRequestInfo(routes, local)
+        Middleware[IO](routes, local).withRequestInfo
       }
     } 
-    // }
 
-    private val healthCheck: HttpRoutes[IO] = HttpRoutes.of[IO]:
-        // TODO: Check DB connection
-        case GET -> Root / "alive" => Ok()
-        case GET -> Root / "ready" => Ok()

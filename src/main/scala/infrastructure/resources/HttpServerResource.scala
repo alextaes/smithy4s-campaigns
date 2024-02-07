@@ -25,6 +25,8 @@ import org.typelevel.log4cats.LoggerFactory
 import org.typelevel.log4cats.slf4j.Slf4jFactory
 import org.typelevel.otel4s.Otel4s
 import org.typelevel.otel4s.trace.Tracer
+import telemetry.ServerMiddleware.ServerMiddlewareOps
+import org.typelevel.otel4s.trace.Tracer.Implicits._
 
 def loadContextFromClasspath[F[_]](keystorePassword: String, keyManagerPass: String)(implicit
     F: Sync[F]
@@ -58,14 +60,14 @@ class SSLResource[IO[_]: Async: Network]{
   } yield tlsContext
 }
 
-class HttpServerResource(
+class HttpServerResource[F[_] : Sync : Async : Concurrent : LiftIO](
                            logger: IzLogger,
                            )(using
                            config: HttpServerConfig):
 
     def resource(local: IOLocal[Option[RequestInfo]]): Resource[IO, Server] = 
       
-      ServerRoutes(Some(logger)).getAll(local)
+      ServerRoutes[IO](Some(logger)).getAll(local)
       .flatMap:
           routes =>
                 for {
@@ -74,6 +76,6 @@ class HttpServerResource(
                         .withHttp2
                         .withHost(host"localhost")
                         .withPort(Port.fromInt(config.port).get)
-                        .withHttpApp(routes.orNotFound)
+                        .withHttpApp(routes.orNotFound.traced)
                         .build
                 } yield res

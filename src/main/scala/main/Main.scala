@@ -37,13 +37,13 @@ object DI:
                   res
 
           
-          make[HttpServerResource].from:
+          make[HttpServerResource[IO]].from:
               (
                 config: HttpServerConfig,
                 logger: IzLogger,
                 ) =>
                   given HttpServerConfig = config
-                  HttpServerResource(logger)
+                  HttpServerResource[IO](logger)
 
 object App extends IOApp:
 
@@ -52,7 +52,7 @@ object App extends IOApp:
             
         Injector[IO]().produceRun(mainModule ++ configModule):
             (
-              httpServer: HttpServerResource) =>
+              httpServer: HttpServerResource[IO]) =>
 
                 val program: IO[Unit] =IOLocal(Option.empty[infrastructure.http.RequestInfo]).flatMap { local =>
                   for
