@@ -6,6 +6,9 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "com.example"
 ThisBuild / organizationName := "example"
 
+val opentelemetryVersion = "1.24.0"
+val opentelemetryAlphaVersion = s"$opentelemetryVersion-alpha"
+
 lazy val autoImportSettingsCommon = Seq(
   "java.lang",
   "scala",
@@ -58,6 +61,7 @@ lazy val root = (project in file("."))
       "com.disneystreaming.smithy4s" %% "smithy4s-http4s" % smithy4sVersion.value,
       "com.disneystreaming.smithy4s" %% "smithy4s-http4s-swagger" % smithy4sVersion.value,
       "com.disneystreaming.smithy"    % "smithytranslate-traits" % "0.3.14",
+      "org.typelevel" %% "otel4s-java" % "0.4.0",
       "org.http4s" %% "http4s-ember-server" % "0.23.25"
     ),
     scalacOptions += autoImportSettingsFs2.mkString(start = "-Yimports:", sep = ",", end = ""),
@@ -65,5 +69,15 @@ lazy val root = (project in file("."))
     Test / parallelExecution := false,
     Compile / run / connectInput := true,
     libraryDependencies ++= Basic.httpServiceDependencies,
-    //libraryDependencies ++= SmithyLibs.interfaceLibsDependencies
+    libraryDependencies ++= Seq(
+      "org.typelevel" %% "otel4s-java" % "0.4.0",
+      "io.opentelemetry" % "opentelemetry-exporter-otlp" % "1.34.1" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.34.1" % Runtime,
+     // "io.opentelemetry" % "opentelemetry-exporter-prometheus" % opentelemetryAlphaVersion,
+
+      "io.opentelemetry.javaagent" % "opentelemetry-javaagent" % "1.26.0" % Runtime
+    ),
+    //javaAgents += "io.opentelemetry.javaagent" % "opentelemetry-javaagent" % "1.24.0",
+    javaOptions += "-Dotel.java.global-autoconfigure.enabled=true",
+    javaOptions += "-Dotel.javaagent.debug=true",
   )
