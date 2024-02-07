@@ -49,13 +49,8 @@ object App extends IOApp:
 
     def run(args: List[String]): IO[ExitCode] =
         import DI.*
-
-        val ioModule =
-          new ModuleDef:
-            make[fs2.io.net.Network[IO]].from:
-              summon[fs2.io.net.Network[IO]]
             
-        Injector[IO]().produceRun(ioModule ++ mainModule ++ configModule):
+        Injector[IO]().produceRun(mainModule ++ configModule):
             (
               httpServer: HttpServerResource) =>
 
