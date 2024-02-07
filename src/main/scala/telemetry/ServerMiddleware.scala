@@ -28,6 +28,7 @@ trait ServerMiddleware {
               }
             } yield {
               val traceIdHeader = Header.Raw(CIString("traceId"), span.context.traceIdHex)
+              IO.println(s"OTEL4s traces -> ${traceIdHeader.name}, value: ${traceIdHeader.value}")
               response.putHeaders(traceIdHeader)
             }
           }
