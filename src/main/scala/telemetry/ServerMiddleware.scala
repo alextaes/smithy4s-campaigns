@@ -2,7 +2,9 @@ package telemetry
 
 import cats.data.Kleisli
 import cats.effect.{Async, Sync}
-import cats.implicits._
+import cats.implicits.*
+import infrastructure.http.RequestInfo
+import logstage.IzLogger
 import org.http4s.{Header, HttpApp, Request}
 import org.typelevel.ci.CIString
 import org.typelevel.otel4s.Attribute
@@ -10,7 +12,7 @@ import org.typelevel.otel4s.trace.{SpanKind, Status, Tracer}
 
 trait ServerMiddleware {
   implicit class ServerMiddlewareOps[F[_] : Sync : Async : Tracer](service: HttpApp[F]) {
-    def traced: HttpApp[F] = {
+    def traced(logger: IzLogger, local: IOLocal[Option[RequestInfo]]): HttpApp[F] = {
       Kleisli { (req: Request[F]) =>
         Tracer[F]
           .spanBuilder("handle-incoming-request")
@@ -28,7 +30,13 @@ trait ServerMiddleware {
               }
             } yield {
               val traceIdHeader = Header.Raw(CIString("traceId"), span.context.traceIdHex)
-              IO.println(s"OTEL4s traces -> ${traceIdHeader.name}, value: ${traceIdHeader.value}")
+              println(s"OTEL4s traces: ${traceIdHeader.name} -> value: ${traceIdHeader.value}")
+              local.get.flatMap {
+                case Some(value) =>
+                  Some(logger).foreach(_.info(s"REQUEST_INFO: ${value.userId}, span: ${span.toString}"))
+                  IO.println(s"REQUEST_INFO: ${value.userId}, span: ${span.toString}")
+                case None => IO.println("None")
+              }
               response.putHeaders(traceIdHeader)
             }
           }

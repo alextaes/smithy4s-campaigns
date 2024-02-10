@@ -31,6 +31,6 @@ class HttpServerResource[F[_] : Sync : Async : Concurrent : LiftIO](
                         .withHttp2
                         .withHost(host"localhost")
                         .withPort(Port.fromInt(config.port).get)
-                        .withHttpApp(routes.orNotFound.traced)
+                        .withHttpApp(routes.orNotFound.traced(logger, local))
                         .build
                 } yield res

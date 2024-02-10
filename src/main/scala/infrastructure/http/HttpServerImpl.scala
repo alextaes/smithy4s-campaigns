@@ -27,7 +27,7 @@ class HttpServerImpl(
     EitherT(IO{Right(Greeting(s"Hello $name from $town! (Result)"))})
 
     val response = requestInfo.flatMap { (reqInfo: RequestInfo) =>
-      IO.println("REQUEST_INFO: " + reqInfo)
+      IO.println("REQUEST_INFO: " + reqInfo.toString)
         .as(Right(Greeting(s"Hello $name from $town! (IO)")))
     }
 
