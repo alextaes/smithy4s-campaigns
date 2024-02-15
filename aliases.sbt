@@ -6,17 +6,17 @@ addCommandAlias("c", "compile")
 
 addCommandAlias(
   "styleCheck",
-  "scalafmtSbtCheck; scalafmtCheckAll",
+  "scalafmtSbtCheck; scalafmtCheckAll"
 )
 
 addCommandAlias(
   "styleFix",
-  "scalafmtSbt; scalafmtAll",
+  "scalafmtSbt; scalafmtAll"
 )
 
 addCommandAlias(
   "rl",
-  "reload; update; reload",
+  "reload; update; reload"
 )
 
 addCommandAlias(
@@ -29,11 +29,9 @@ onLoadMessage +=
       |╭─────────────────────────────────╮
       |│     List of defined ${styled("aliases")}     │
       |├─────────────┬───────────────────┤
-      |│ ${styled("l")} | ${styled("ll")} | ${
-                                               styled(
-                                                 "ls"
-                                               )
-                                             } │ projects          │
+      |│ ${styled("l")} | ${styled("ll")} | ${styled(
+       "ls"
+     )} │ projects          │
       |│ ${styled("cd")}          │ project           │
       |│ ${styled("c")}           │ compile           │
       |│ ${styled("styleCheck")}  │ fmt check         │

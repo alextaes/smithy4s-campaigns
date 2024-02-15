@@ -8,12 +8,12 @@ object Utilities {
 
   def prompt(projectName: String): String =
     gitPrompt
-      .fold(projectPrompt(projectName)) {
-        g =>
-          s"$g:${projectPrompt(projectName)}"
+      .fold(projectPrompt(projectName)) { g =>
+        s"$g:${projectPrompt(projectName)}"
       }
 
-  private def projectPrompt(projectName: String): String = s"sbt:${styled(projectName)}"
+  private def projectPrompt(projectName: String): String =
+    s"sbt:${styled(projectName)}"
 
   def projectName(state: State): String =
     Project

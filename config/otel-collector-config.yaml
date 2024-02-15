@@ -1,0 +1,21 @@
+receivers:
+  otlp:
+    protocols: # enable OpenTelemetry Protocol receiver, both gRPC and HTTP
+      grpc:
+      http:
+
+exporters:
+  prometheus: # run Prometheus exporter server on port 8889, so Prometheus can scrape the metrics  
+    endpoint: 0.0.0.0:8889
+    send_timestamps: true
+
+processors:
+  batch:
+    timeout: 1s
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]
