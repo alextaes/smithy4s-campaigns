@@ -19,8 +19,11 @@ class HttpServerResource[F[_]: Sync: Async: Concurrent: LiftIO](
     logger: IzLogger
 )(using config: HttpServerConfig):
 
-  def resource(local: IOLocal[Option[RequestInfo]]): Resource[IO, Server] =
-    ServerRoutes[IO](Some(logger))
+  def resource(
+      local: IOLocal[Option[RequestInfo]],
+      traceProvider: Tracer[IO]
+  ): Resource[IO, Server] =
+    ServerRoutes[IO](Some(logger), traceProvider)
       .getAll(local)
       .flatMap:
       routes =>

@@ -16,14 +16,15 @@ trait ServerMiddleware {
   ) {
     def traced: HttpApp[F] = {
       Kleisli { (req: Request[F]) =>
-        Tracer[F]
+        val res2: F[Response[F]] = Tracer[F]
           .spanBuilder("handle-incoming-request")
           .addAttribute(Attribute("http.method", req.method.name))
           .addAttribute(Attribute("http.url", req.uri.renderString))
           .withSpanKind(SpanKind.Server)
           .build
           .use { span =>
-            for {
+
+            val res = for {
               response <- service(req)
               _ <- span.addAttribute(
                 Attribute("http.status-code", response.status.code.toLong)
@@ -44,7 +45,10 @@ trait ServerMiddleware {
               // }
               response.putHeaders(traceIdHeader)
             }
+            res
+
           }
+        res2
       }
     }
   }
@@ -57,9 +61,28 @@ import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s.Hints
 import smithy4s.http4s.ServerEndpointMiddleware
 
+import cats.FlatMap
+import cats.arrow.FunctionK
+import cats.data.Kleisli
+import cats.data.NonEmptyList
+import cats.data.OptionT
+import cats.effect.Sync
+import cats.effect.SyncIO
+import cats.effect.std.UUIDGen
+import cats.syntax.all._
+import cats.~>
+import org.typelevel.ci._
+import org.typelevel.vault.Key
+
 class SmithyMiddleware[F[_]: Sync: Async: Tracer]:
 
-  private def middleware(local: IOLocal[Option[RequestInfo]]): HttpApp[F] => HttpApp[F] = { service =>
+  private[this] val requestIdHeader = ci"X-trarce-ID"
+
+  val requestIdAttrKey: Key[String] = Key.newKey[SyncIO, String].unsafeRunSync()
+
+  import cats.effect.unsafe.implicits.global
+
+  private def middleware: HttpApp[F] => HttpApp[F] = { service =>
     Kleisli { (req: Request[F]) =>
 
       val h = req.headers.headers
@@ -74,26 +97,16 @@ class SmithyMiddleware[F[_]: Sync: Async: Tracer]:
         .withSpanKind(SpanKind.Server)
         .build
         .use { span =>
-          val traceIdHeader = Header.Raw(CIString("traceId"), span.context.traceIdHex)
-          
-          
-          println(s"traceId header ${span.context.traceIdHex}")
+          val traceIdHeader =
+            Header.Raw(CIString("traceId2"), span.context.traceIdHex)
+          println("okokok")
 
-          val requestInfo = Some(
-            RequestInfo(
-              req.headers.headers
-                .find(key => key.name == CIString("userId"))
-                .map(el => el.value),
-                Some(span.context.traceIdHex)
-            )
-          )
-
-          import cats.effect.unsafe.implicits.global
-          //  OptionT.liftF(local.set(requestInfo)) *> routes(request)
-           local.set(requestInfo).unsafeRunSync()
-      
           for {
-            response <- service(req)
+            response <- service(
+              req
+                .withAttribute(requestIdAttrKey, "traceId2")
+                .putHeaders(traceIdHeader)
+            )
             _ <- span.addAttribute(
               Attribute("http.status-code", response.status.code.toLong)
             )
@@ -120,11 +133,11 @@ class SmithyMiddleware[F[_]: Sync: Async: Tracer]:
 
   }
 
-  def apply(local: IOLocal[Option[RequestInfo]]): ServerEndpointMiddleware[F] =
+  def apply(): ServerEndpointMiddleware[F] =
     new ServerEndpointMiddleware.Simple[F] {
       def prepareWithHints(
           serviceHints: Hints,
           endpointHints: Hints
-      ): HttpApp[F] => HttpApp[F] = middleware(local)
+      ): HttpApp[F] => HttpApp[F] = middleware
 
     }

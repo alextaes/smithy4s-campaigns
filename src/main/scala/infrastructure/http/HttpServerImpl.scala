@@ -19,7 +19,19 @@ case class RequestInfo(
 class HttpServerImpl(
     logger: Option[IzLogger],
     requestInfo: IO[RequestInfo]
+    // local: IOLocal[Option[RequestInfo]],
 ) extends HelloWorldService[Result] {
+
+  // def requestInfo: IO[RequestInfo] =
+  //     local.get.flatMap {
+  //     case Some(value) => IO.pure(value)
+  //     case None =>
+  //       IO.raiseError(
+  //         new IllegalAccessException(
+  //           "Tried to access the value outside of the lifecycle of an http request"
+  //         )
+  //       )
+  //   }
 
   // https://0.0.0.0:9006/person/pepe?town=granada
   def hello(name: String, town: Option[String]): Result[Greeting] =

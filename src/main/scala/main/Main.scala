@@ -12,6 +12,11 @@ import logstage.{ConsoleSink, IzLogger, Trace}
 import izumi.logstage.api.routing.StaticLogRouter
 import infrastructure.resources.*
 
+import io.opentelemetry.api.GlobalOpenTelemetry
+import org.typelevel.otel4s.Otel4s
+import org.typelevel.otel4s.java.OtelJava
+import org.typelevel.otel4s.metrics.Meter
+
 object DI:
 
   val configModule =
@@ -36,6 +41,11 @@ object DI:
         StaticLogRouter.instance.setup(res.router)
         res
 
+      make[Otel4s[IO]].fromResource: 
+        Resource
+         .eval(Sync[IO].delay(GlobalOpenTelemetry.get))
+         .evalMap(OtelJava.forAsync[IO])
+
       make[HttpServerResource[IO]].from: (
           config: HttpServerConfig,
           logger: IzLogger
@@ -50,13 +60,19 @@ object App extends IOApp:
 
     Injector[IO]().produceRun(
       mainModule ++ configModule
-    ): (httpServer: HttpServerResource[IO]) =>
+    ): (
+        httpServer: HttpServerResource[IO],
+        otel: Otel4s[IO]
+    ) =>
 
       val program: IO[Unit] =
         IOLocal(Option.empty[infrastructure.http.RequestInfo]).flatMap {
           local =>
-            for _ <- httpServer
-                .resource(local)
+            for
+              traceProvider <- otel.tracerProvider.get("tickets-service")
+              metricsProvider: Meter[IO] <- otel.meterProvider.get("tickets-service")
+              _ <- httpServer
+                .resource(local, traceProvider)
                 .use((server: Server) => IO.never)
             yield ()
         }
