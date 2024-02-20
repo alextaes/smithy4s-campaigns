@@ -5,7 +5,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 Global / excludeLintKeys ++= Set(
   autoStartServer,
   turbo,
-  evictionWarningOptions,
+  evictionWarningOptions
 )
 
 Test / parallelExecution := false
@@ -20,8 +20,8 @@ ThisBuild / watchBeforeCommand := Watch.clearScreen
 ThisBuild / watchTriggeredMessage := Watch.clearScreenOnTrigger
 ThisBuild / watchForceTriggerOnAnyChange := true
 
-ThisBuild / shellPrompt := {
-  state => s"${prompt(projectName(state))}> "
+ThisBuild / shellPrompt := { state =>
+  s"${prompt(projectName(state))}> "
 }
 
 ThisBuild / watchStartMessage := {

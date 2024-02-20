@@ -15,22 +15,24 @@ import org.typelevel.otel4s.trace.Tracer
 import telemetry.ServerMiddleware.ServerMiddlewareOps
 import org.typelevel.otel4s.trace.Tracer.Implicits._
 
-class HttpServerResource[F[_] : Sync : Async : Concurrent : LiftIO](
-                           logger: IzLogger,
-                           )(using
-                           config: HttpServerConfig):
+class HttpServerResource[F[_]: Sync: Async: Concurrent: LiftIO](
+    logger: IzLogger
+)(using config: HttpServerConfig):
 
-    def resource(local: IOLocal[Option[RequestInfo]]): Resource[IO, Server] = 
-      
-      ServerRoutes[IO](Some(logger)).getAll(local)
+  def resource(
+      local: IOLocal[Option[RequestInfo]],
+      traceProvider: Tracer[IO]
+  ): Resource[IO, Server] =
+    ServerRoutes[IO](Some(logger), traceProvider)
+      .getAll(local)
       .flatMap:
-          routes =>
-                for {
-                      res <- EmberServerBuilder
-                        .default[IO]
-                        .withHttp2
-                        .withHost(host"localhost")
-                        .withPort(Port.fromInt(config.port).get)
-                        .withHttpApp(routes.orNotFound.traced(logger, local))
-                        .build
-                } yield res
+      routes =>
+        for {
+          res <- EmberServerBuilder
+            .default[IO]
+            .withHttp2
+            .withHost(host"0.0.0.0")
+            .withPort(Port.fromInt(config.port).get)
+            .withHttpApp(routes.orNotFound)
+            .build
+        } yield res
