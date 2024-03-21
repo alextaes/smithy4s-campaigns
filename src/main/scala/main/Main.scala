@@ -17,6 +17,17 @@ import org.typelevel.otel4s.Otel4s
 import org.typelevel.otel4s.java.OtelJava
 import org.typelevel.otel4s.metrics.Meter
 
+import _root_.io.opentelemetry.api.OpenTelemetry;
+import _root_.io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
+import _root_.io.opentelemetry.context.propagation.ContextPropagators;
+
+// import _root_.io.opentelemetry.exporter.logging.LoggingSpanExporter;
+import opentelemetry.exporter2.logging.LoggingSpanExporter
+
+import _root_.io.opentelemetry.sdk.OpenTelemetrySdk;
+import _root_.io.opentelemetry.sdk.trace.SdkTracerProvider;
+import _root_.io.opentelemetry.sdk.trace.`export`.SimpleSpanProcessor;
+
 object DI:
 
   val configModule =
@@ -42,8 +53,19 @@ object DI:
         res
 
       make[Otel4s[IO]].fromResource: 
+        
+        val sdkTracerProvider = SdkTracerProvider.builder()
+            .addSpanProcessor(SimpleSpanProcessor.create(LoggingSpanExporter.create()))
+            .build()
+
+        val sdk =
+        OpenTelemetrySdk.builder()
+            .setTracerProvider(sdkTracerProvider)
+            // .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+            .build();
         Resource
-         .eval(Sync[IO].delay(GlobalOpenTelemetry.get))
+        //  .eval(Sync[IO].delay(GlobalOpenTelemetry.get))
+         .eval(Sync[IO].delay(sdk))
          .evalMap(OtelJava.forAsync[IO])
 
       make[HttpServerResource[IO]].from: (
@@ -70,7 +92,7 @@ object App extends IOApp:
           local =>
             for
               traceProvider <- otel.tracerProvider.get("tickets-service")
-              metricsProvider: Meter[IO] <- otel.meterProvider.get("tickets-service")
+              // metricsProvider: Meter[IO] <- otel.meterProvider.get("tickets-service")
               _ <- httpServer
                 .resource(local, traceProvider)
                 .use((server: Server) => IO.never)

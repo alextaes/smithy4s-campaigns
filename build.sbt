@@ -36,6 +36,8 @@ lazy val commonSettings = Seq(
   organizationName := "Demos",
   ThisBuild / evictionErrorLevel := Level.Info,
   dependencyOverrides ++= Seq(
+      // "io.opentelemetry" % "opentelemetry-exporter-otlp" % opentelemetry , //% Runtime,
+      // "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % opentelemetry , //% Runtime,
   ),
   ThisBuild / resolvers += "Akka library repository".at(
     "https://repo.akka.io/maven"
@@ -77,17 +79,21 @@ lazy val root = (project in file("."))
     Compile / run / connectInput := true,
     libraryDependencies ++= Basic.httpServiceDependencies,
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "otel4s-java" % "0.4.0",
-      "io.opentelemetry.javaagent" % "opentelemetry-javaagent" % "2.0.0" % Runtime,
+      // "org.typelevel" %% "otel4s-java" % "0.4.0",
+      // "io.opentelemetry.javaagent" % "opentelemetry-javaagent" % "2.0.0" % Runtime,
       // "io.opentelemetry" % "opentelemetry-exporter-prometheus" % opentelemetryPrometheus % Runtime,
-      "io.opentelemetry" % "opentelemetry-exporter-otlp" % opentelemetry % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % opentelemetry % Runtime,
-      "org.typelevel" %% "otel4s-java" % "0.4.0"
+
+      // "io.opentelemetry" % "opentelemetry-exporter-otlp" % opentelemetry % Runtime,
+      // "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % opentelemetry % Runtime,
+      // "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % opentelemetry,
+      "io.opentelemetry" % "opentelemetry-exporter-logging" % opentelemetry, // % Runtime,
+
+      "org.typelevel" %% "otel4s-java" % "0.4.0" ,
       // "io.opentelemetry" % "opentelemetry-bom" % opentelemetry pomOnly (),
       // "io.opentelemetry" % "opentelemetry-api" % opentelemetry,
       // "io.opentelemetry" % "opentelemetry-sdk" % opentelemetry
     ),
-    javaOptions += "-Dotel.java.global-autoconfigure.enabled=true",
+    // javaOptions += "-Dotel.java.global-autoconfigure.enabled=true",
     javaOptions += "-Dotel.service.name=smithy4s-campaigns"
     // javaOptions += "-Dotel.exporter.otlp.endpoint=http://localhost:4317",
     // javaOptions += "-Dotel.javaagent.debug=true",
